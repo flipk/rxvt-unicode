@@ -2209,8 +2209,17 @@ rxvt_term::button_release (XButtonEvent &ev)
             break;
 
           case Button2:
+
+              // pfk :   middle click pastes PRIMARY
+              //  meta + middle click pastes CLIPBOARD (RealVNC from windows)
+              // shift + middle click pastes SECONDARY (tigerVNC from windows)
+
             if (IN_RANGE_EXC (ev.x, 0, vt_width) && IN_RANGE_EXC (ev.y, 0, vt_height)) // inside window?
-              selection_request (ev.time, ev.state & ModMetaMask ? Sel_Clipboard : Sel_Primary);
+            {
+              selection_request (ev.time,
+                                 ev.state & ModMetaMask ? Sel_Clipboard :
+                                 ev.state & ShiftMask ? Sel_Secondary : Sel_Primary);
+            }
             break;
 
 #ifdef MOUSE_WHEEL

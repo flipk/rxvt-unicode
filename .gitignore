@@ -1,0 +1,12 @@
+*.o
+*.man
+Makefile
+config.h
+config.log
+config.status
+cscope.*
+doc/Makefile
+src/Makefile
+src/rxvt
+src/rxvtc
+src/rxvtd

@@ -1,0 +1,8 @@
+
+./configure --prefix=/home/flipk/pfk/Linux-3.11.10-301.fc20.x86_64/urxvt-9.21 \
+  --enable-xft --enable-font-styles \
+  --disable-perl --disable-iso14755 \
+  --enable-selectionscrolling --enable-mousewheel \
+  --disable-utmp --disable-wtmp --disable-lastlog \
+  --with-term=vt100
+

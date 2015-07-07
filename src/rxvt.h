@@ -1545,6 +1545,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   void selection_request (Time tm, int selnum = Sel_Primary) NOTHROW;
   void selection_clear (bool clipboard = false) NOTHROW;
   void selection_make (Time tm);
+  bool _selection_grab (Time tm, bool clipboard = false) NOTHROW;
   bool selection_grab (Time tm, bool clipboard = false) NOTHROW;
   void selection_start_colrow (int col, int row) NOTHROW;
   void selection_delimit_word (enum page_dirn dirn, const row_col_t *mark, row_col_t *ret) NOTHROW;
@@ -1565,6 +1566,15 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   void enumerate_keysym_resources (void (*cb)(rxvt_term *, const char *, const char *));
   void extract_keysym_resources ();
 };
+
+static inline wchar_t *
+rxvt_wcsdup (const wchar_t *str, int len)
+{
+  wchar_t *r = (wchar_t *)rxvt_malloc ((len + 1) * sizeof (wchar_t));
+  memcpy (r, str, len * sizeof (wchar_t));
+  r[len] = 0;
+  return r;
+}
 
 #endif /* _RXVT_H_ */
 

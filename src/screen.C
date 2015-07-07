@@ -2900,7 +2900,7 @@ rxvt_term::selection_make (Time tm)
 }
 
 bool
-rxvt_term::selection_grab (Time tm, bool clipboard) NOTHROW
+rxvt_term::_selection_grab (Time tm, bool clipboard) NOTHROW
 {
   Atom sel;
 
@@ -2936,6 +2936,16 @@ rxvt_term::selection_grab (Time tm, bool clipboard) NOTHROW
       XFree (ct.value);
     }
 #endif
+}
+
+bool
+rxvt_term::selection_grab (Time tm, bool clipboard) NOTHROW
+{
+    free (selection.clip_text);
+    selection.clip_text = rxvt_wcsdup (selection.text, selection.len);
+    selection.clip_len = selection.len;
+    _selection_grab(tm,false);
+    return _selection_grab(tm,true);
 }
 
 /* ------------------------------------------------------------------------- */

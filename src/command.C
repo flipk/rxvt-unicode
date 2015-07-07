@@ -395,15 +395,6 @@ map_function_key (KeySym keysym)
   return param;
 }
 
-static inline wchar_t *
-rxvt_wcsdup (const wchar_t *str, int len)
-{
-  wchar_t *r = (wchar_t *)rxvt_malloc ((len + 1) * sizeof (wchar_t));
-  memcpy (r, str, len * sizeof (wchar_t));
-  r[len] = 0;
-  return r;
-}
-
 void ecb_cold
 rxvt_term::key_press (XKeyEvent &ev)
 {

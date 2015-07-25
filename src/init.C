@@ -44,6 +44,10 @@
 
 #include <fcntl.h>
 
+#ifdef HAVE_XMU
+# include <X11/Xmu/CurUtil.h>
+#endif
+
 #ifdef HAVE_XSETLOCALE
 # define X_LOCALE
 # include <X11/Xlocale.h>
@@ -1209,7 +1213,7 @@ rxvt_term::get_ourmods ()
 void
 rxvt_term::set_icon (const char *file)
 {
-#if HAVE_PIXBUF
+#if HAVE_PIXBUF && ENABLE_EWMH
   GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (file, NULL);
   if (!pixbuf)
     {
@@ -1405,7 +1409,18 @@ rxvt_term::create_windows (int argc, const char *const *argv)
   termwin_ev.start (display, top);
 
   /* vt cursor: Black-on-White is standard, but this is more popular */
-  TermWin_cursor = XCreateFontCursor (dpy, XC_xterm);
+  unsigned int shape = XC_xterm;
+
+#ifdef HAVE_XMU
+  if (rs[Rs_pointerShape])
+    {
+      int stmp = XmuCursorNameToIndex (rs[Rs_pointerShape]);
+      if (stmp >= 0)
+        shape = stmp;
+    }
+#endif
+
+  TermWin_cursor = XCreateFontCursor (dpy, shape);
 
   /* the vt window */
   vt = XCreateSimpleWindow (dpy, top,

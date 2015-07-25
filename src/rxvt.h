@@ -47,7 +47,6 @@ typedef  int32_t tlen_t_; // specifically for use in the line_t structure
 
 #if defined (ISO_14755) || defined (ENABLE_PERL)
 # define ENABLE_OVERLAY 1
-# undef NO_RESOURCES
 #endif
 
 #if ENABLE_PERL

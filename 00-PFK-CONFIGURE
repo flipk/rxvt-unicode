@@ -1,5 +1,5 @@
 
-./configure --prefix=$HOME/pfk/$PFKARCH/urxvt-9.21 \
+./configure --prefix=$HOME/pfk/$PFKARCH/urxvt-9.22 \
   --enable-xft --enable-font-styles --disable-perl --disable-iso14755 \
   --enable-selectionscrolling --enable-mousewheel \
   --disable-utmp --disable-wtmp --disable-lastlog \

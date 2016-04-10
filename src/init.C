@@ -950,6 +950,10 @@ rxvt_term::init_env ()
   else
     putenv ("TERM=" TERMENV);
 
+  char * rxvtpid_env = (char *)rxvt_malloc (32);
+  sprintf(rxvtpid_env, "RXVT_PID=%d", getpid());
+  putenv(rxvtpid_env);
+
 #ifdef HAVE_UNSETENV
   /* avoid passing old settings and confusing term size */
   unsetenv ("LINES");

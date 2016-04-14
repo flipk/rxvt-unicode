@@ -52,6 +52,9 @@
 # include <locale.h>
 #endif
 
+#include <list>
+#include <string>
+
 struct termios rxvt_term::def_tio;
 vector<rxvt_term *> rxvt_term::termlist;
 
@@ -817,13 +820,38 @@ rxvt_term::set_fonts ()
   rxvt_fontset *fs = new rxvt_fontset (this);
   rxvt_fontprop prop;
 
-  if (!fs
-      || !fs->populate (rs[Rs_font] ? rs[Rs_font] : "fixed")
-      || !fs->realize_font (1))
-    {
+  if (!rs)
+      return false;
+
+  std::list<std::string>  fontlist;
+  if (rs[Rs_font])
+      fontlist.push_back(rs[Rs_font]);
+  if (rs[Rs_altFont])
+      fontlist.push_back(rs[Rs_altFont]);
+  fontlist.push_back("fixed");
+
+  bool fontFound = false;
+  do {
+      std::string fontName = fontlist.front();
+      fontlist.pop_front();
+      if (!fs->populate (fontName.c_str()))
+      {
+          printf("loading font %s failed\n", fontName.c_str());
+          continue;
+      }
+      if (!fs->realize_font (1))
+      {
+          printf("realizing font %s failed\n", fontName.c_str());
+          continue;
+      }
+      fontFound = true;
+  } while (fontlist.size() > 0 && fontFound == false);
+
+  if (fontFound == false)
+  {
       delete fs;
       return false;
-    }
+  }
 
 #if ENABLE_STYLES
   for (int i = RS_styleCount; --i; )

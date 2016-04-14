@@ -511,6 +511,7 @@ enum {
   URxvt_boldFont         = 711,
   URxvt_italicFont       = 712,
   URxvt_boldItalicFont   = 713,
+  URxvt_altFont          = 714,
 
   URxvt_view_up          = 720,
   URxvt_view_down        = 721,

@@ -213,6 +213,7 @@ optList[] = {
               STRG (Rs_italicFont, "italicFont", "fi", "fontname", "italic font"),
               STRG (Rs_boldItalicFont, "boldItalicFont", "fbi", "fontname", "bold italic font"),
               BOOL (Rs_intensityStyles, "intensityStyles", "is", Opt_intensityStyles, 0, "font styles imply intensity changes"),
+              STRG (Rs_altFont, "altFont", "fa", "fontname", "alt text font, in case normal font fails to load"),
 #endif
 #if USE_XIM
               STRG (Rs_inputMethod, "inputMethod", "im", "name", "name of input method"),

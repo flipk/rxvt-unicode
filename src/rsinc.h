@@ -14,6 +14,7 @@
   def (italicFont)
   def (boldItalicFont)
   def (intensityStyles)
+  def (altFont)
 #endif
   def (name)
   def (title)

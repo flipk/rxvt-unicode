@@ -293,7 +293,7 @@ overlay::hide ()
   for (; i < AvFILL (overlay_av); i++)
     av_store (overlay_av, i, SvREFCNT_inc (*av_fetch (overlay_av, i + 1, 0)));
 
-  av_pop (overlay_av);
+  SvREFCNT_dec (av_pop (overlay_av));
 
   SvREFCNT_dec (overlay_av);
   overlay_av = 0;
@@ -1022,6 +1022,36 @@ BOOT:
     const_iv (XIMDontChange),
 #   endif
 #   endif
+
+    /* DEC private modes */
+    const_iv (PrivMode_132),
+    const_iv (PrivMode_132OK),
+    const_iv (PrivMode_rVideo),
+    const_iv (PrivMode_relOrigin),
+    const_iv (PrivMode_Screen),
+    const_iv (PrivMode_Autowrap),
+    const_iv (PrivMode_aplCUR),
+    const_iv (PrivMode_aplKP),
+    const_iv (PrivMode_HaveBackSpace),
+    const_iv (PrivMode_BackSpace),
+    const_iv (PrivMode_ShiftKeys),
+    const_iv (PrivMode_VisibleCursor),
+    const_iv (PrivMode_MouseX10),
+    const_iv (PrivMode_MouseX11),
+    const_iv (PrivMode_scrollBar),
+    const_iv (PrivMode_TtyOutputInh),
+    const_iv (PrivMode_Keypress),
+    const_iv (PrivMode_smoothScroll),
+    const_iv (PrivMode_vt52),
+    const_iv (PrivMode_LFNL),
+    const_iv (PrivMode_MouseBtnEvent),
+    const_iv (PrivMode_MouseAnyEvent),
+    const_iv (PrivMode_BracketPaste),
+    const_iv (PrivMode_ExtModeMouse),
+    const_iv (PrivMode_ExtMouseRight),
+    const_iv (PrivMode_BlinkingCursor),
+    const_iv (PrivMode_mouse_report),
+    const_iv (PrivMode_Default),
   };
 
   for (civ = const_iv + ecb_array_length (const_iv); civ > const_iv; civ--)
@@ -1422,6 +1452,7 @@ rxvt_term::ModLevel3Mask ()
            ModNumLockMask = 2
            current_screen = 3
            hidden_cursor  = 4
+           priv_modes     = 5
 	CODE:
         switch (ix)
           {
@@ -1431,7 +1462,10 @@ rxvt_term::ModLevel3Mask ()
             case 3: RETVAL = THIS->current_screen; break;
 #ifdef CURSOR_BLINK
             case 4: RETVAL = THIS->hidden_cursor;  break;
+#else
+            case 4: RETVAL = 0;                    break;
 #endif
+            case 5: RETVAL = THIS->priv_modes;     break;
           }
         OUTPUT:
         RETVAL
@@ -2303,7 +2337,7 @@ rxvt_term::set_background (rxvt_img *img, bool border = false)
                ->replace (img);
 
             THIS->bg_img = img;
-            THIS->bg_flags |= rxvt_term::BG_NEEDS_REFRESH | rxvt_term::BG_INHIBIT_RENDER;
+            THIS->bg_flags |= rxvt_term::BG_NEEDS_REFRESH;
 
             if (!border)
               THIS->bg_flags |= rxvt_term::BG_IS_TRANSPARENT;
@@ -2390,7 +2424,9 @@ void
 rxvt_img::fill (SV *c, int x = 0, int y = 0, int w = THIS->w, int h = THIS->h)
 	PROTOTYPE: $;$$$$
 	INIT:
-        rgba cc = parse_rgba (c, THIS->s);
+	rxvt_screen screen;
+	screen.set (THIS->d);
+	rgba cc = parse_rgba (c, &screen);
 	C_ARGS: cc, x, y, w, h
 
 void
@@ -2458,7 +2494,9 @@ rxvt_img::rotate (int x, int y, rxvt_img::nv phi)
 rxvt_img *
 rxvt_img::tint (SV *c)
 	INIT:
-        rgba cc = parse_rgba (c, THIS->s);
+	rxvt_screen screen;
+	screen.set (THIS->d);
+	rgba cc = parse_rgba (c, &screen);
 	C_ARGS: cc
 
 rxvt_img *

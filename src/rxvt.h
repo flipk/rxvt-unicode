@@ -77,17 +77,7 @@ typedef  int32_t tlen_t_; // specifically for use in the line_t structure
 #endif
 
 #if XRENDER && (HAVE_PIXBUF || ENABLE_TRANSPARENCY)
-# define HAVE_BG_PIXMAP 1
 # define HAVE_IMG 1
-#endif
-
-#if HAVE_BG_PIXMAP
-# if HAVE_PIXBUF
-#  define BG_IMAGE_FROM_FILE 1
-# endif
-# if ENABLE_TRANSPARENCY
-#  define BG_IMAGE_FROM_ROOT 1
-# endif
 #endif
 
 #include <ecb.h>
@@ -214,85 +204,6 @@ struct localise_env
   }
 };
 
-#ifdef HAVE_BG_PIXMAP
-struct image_effects
-{
-  bool tint_set;
-  rxvt_color tint;
-  int shade;
-  int h_blurRadius, v_blurRadius;
-
-  image_effects ()
-  {
-    tint_set     =
-    h_blurRadius =
-    v_blurRadius = 0;
-    shade = 100;
-  }
-
-  bool need_tint ()
-  {
-    return shade != 100 || tint_set;
-  }
-
-  bool need_blur ()
-  {
-    return h_blurRadius && v_blurRadius;
-  }
-
-  bool set_tint (const rxvt_color &new_tint);
-  bool set_shade (const char *shade_str);
-  bool set_blur (const char *geom);
-};
-
-# if BG_IMAGE_FROM_FILE
-enum {
-  IM_IS_SIZE_SENSITIVE = 1 << 1,
-  IM_KEEP_ASPECT       = 1 << 2,
-  IM_ROOT_ALIGN        = 1 << 3,
-  IM_TILE              = 1 << 4,
-  IM_GEOMETRY_FLAGS    = IM_KEEP_ASPECT | IM_ROOT_ALIGN | IM_TILE,
-};
-
-enum {
-  noScale = 0,
-  windowScale = 100,
-  defaultScale = windowScale,
-  centerAlign = 50,
-  defaultAlign = centerAlign,
-};
-
-struct rxvt_image : image_effects
-{
-  unsigned short alpha;
-  uint8_t flags;
-  unsigned int h_scale, v_scale; /* percents of the window size */
-  int h_align, v_align;          /* percents of the window size:
-                                    0 - left align, 50 - center, 100 - right */
-
-  bool is_size_sensitive ()
-  {
-    return (!(flags & IM_TILE)
-            || h_scale || v_scale
-            || (!(flags & IM_ROOT_ALIGN) && (h_align || v_align)));
-  }
-
-  rxvt_img *img;
-
-  void destroy ()
-  {
-    delete img;
-    img = 0;
-  }
-
-  rxvt_image ();
-  void set_file_geometry (rxvt_screen *s, const char *file);
-  void set_file (rxvt_screen *s, const char *file);
-  bool set_geometry (const char *geom, bool update = false);
-};
-# endif
-#endif
-
 /*
  *****************************************************************************
  * STRUCTURES AND TYPEDEFS
@@ -344,7 +255,7 @@ struct mouse_event
 
 /* COLORTERM, TERM environment variables */
 #define COLORTERMENV    "rxvt"
-#if BG_IMAGE_FROM_FILE
+#if HAVE_IMG
 # define COLORTERMENVFULL COLORTERMENV "-xpm"
 #else
 # define COLORTERMENVFULL COLORTERMENV
@@ -356,6 +267,23 @@ struct mouse_event
 #  define TERMENV        "rxvt-unicode"
 # endif
 #endif
+
+// Hidden color cube for indexed 24-bit colors. There are fewer blue levels
+// because normal human eye is less sensitive to the blue component than to
+// the red or green. (https://en.m.wikipedia.org/wiki/Color_depth#8-bit_color)
+#if USE_256_COLORS
+// 7x7x5=245 < 254 unused color indices
+# define Red_levels      7
+# define Green_levels    7
+# define Blue_levels     5
+#else
+// 6x6x4=144 < 166 unused color indices
+# define Red_levels      6
+# define Green_levels    6
+# define Blue_levels     4
+#endif
+
+#define RGB24_CUBE_SIZE (Red_levels * Green_levels * Blue_levels)
 
 #if defined (NO_MOUSE_REPORT) && !defined (NO_MOUSE_REPORT_SCROLLBAR)
 # define NO_MOUSE_REPORT_SCROLLBAR 1
@@ -495,14 +423,12 @@ enum {
   Rxvt_restoreFG         = 39,
   Rxvt_restoreBG         = 49,
 
-  Rxvt_Pixmap            = 20,      // new bg pixmap
   Rxvt_dumpscreen        = 55,      // dump scrollback and all of screen
 
   URxvt_locale           = 701,     // change locale
   URxvt_version          = 702,     // request version
 
   URxvt_Color_IT         = 704,     // change actual 'Italic' colour
-  URxvt_Color_tint       = 705,     // change actual tint colour
   URxvt_Color_BD         = 706,     // change actual 'Bold' color
   URxvt_Color_UL         = 707,     // change actual 'Underline' color
   URxvt_Color_border     = 708,
@@ -561,6 +487,9 @@ enum colour_list {
 #else
   maxTermCOLOR = Color_White + 72,
 #endif
+  minTermCOLOR24,
+  maxTermCOLOR24 = minTermCOLOR24 +
+                   RGB24_CUBE_SIZE - 1,
 #ifndef NO_CURSORCOLOR
   Color_cursor,
   Color_cursor2,
@@ -585,9 +514,6 @@ enum colour_list {
 #ifdef RXVT_SCROLLBAR
   Color_trough,
 #endif
-#if BG_IMAGE_FROM_ROOT
-  Color_tint,
-#endif
 #if OFF_FOCUS_FADING
   Color_fade,
 #endif
@@ -602,9 +528,13 @@ enum colour_list {
 };
 
 #if USE_256_COLORS
-# define Color_Bits      9 // 0 .. maxTermCOLOR
+# define Color_Bits      9 // 0 .. maxTermCOLOR24
 #else
-# define Color_Bits      7 // 0 .. maxTermCOLOR
+# define Color_Bits      8 // 0 .. maxTermCOLOR24
+#endif
+
+#if maxTermCOLOR24 >= (1 << Color_Bits)
+# error color index overflow
 #endif
 
 /*
@@ -646,6 +576,7 @@ enum {
 #define PrivMode_ExtModeMouse   (1UL<<23) // xterm pseudo-utf-8 hack
 #define PrivMode_ExtMouseRight  (1UL<<24) // xterm pseudo-utf-8, but works in non-utf-8-locales
 #define PrivMode_BlinkingCursor (1UL<<25)
+#define PrivMode_FocusEvent     (1UL<<26)
 
 #define PrivMode_mouse_report   (PrivMode_MouseX10|PrivMode_MouseX11|PrivMode_MouseBtnEvent|PrivMode_MouseAnyEvent)
 
@@ -1171,35 +1102,10 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   static struct termios def_tio;
   row_col_t       oldcursor;
 
-#ifdef HAVE_BG_PIXMAP
-  void bg_init ();
-  void bg_destroy ();
-
-# if BG_IMAGE_FROM_FILE
-  rxvt_image fimage;
-  void render_image (rxvt_image &image);
-# endif
-
-# if BG_IMAGE_FROM_ROOT
-  rxvt_img *root_img;
-  image_effects root_effects;
-
-  void render_root_image ();
-# endif
-
-  ev_tstamp bg_valid_since;
-
-  bool bg_window_size_sensitive ();
-  bool bg_window_position_sensitive ();
-
-  void bg_render ();
-#endif
-
 #ifdef HAVE_IMG
   enum {
     BG_IS_TRANSPARENT    = 1 << 1,
     BG_NEEDS_REFRESH     = 1 << 2,
-    BG_INHIBIT_RENDER    = 1 << 3,
   };
 
   uint8_t bg_flags;
@@ -1250,6 +1156,10 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   void           *chunk;
   size_t          chunk_size;
 
+  uint32_t        rgb24_color[RGB24_CUBE_SIZE];   // the 24-bit color value
+  uint16_t        rgb24_seqno[RGB24_CUBE_SIZE];   // which one is older?
+  uint16_t        rgb24_sequence;
+
   static vector<rxvt_term *> termlist; // a vector of all running rxvt_term's
 
 #if ENABLE_FRILLS || ISO_14755
@@ -1269,14 +1179,9 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
     XSelectInput (dpy, vt, vt_emask | vt_emask_perl | vt_emask_xim | vt_emask_mouse);
   }
 
-#if BG_IMAGE_FROM_ROOT || ENABLE_PERL
+#if ENABLE_PERL
   void rootwin_cb (XEvent &xev);
   xevent_watcher rootwin_ev;
-#endif
-#ifdef HAVE_BG_PIXMAP
-  void update_background ();
-  void update_background_cb (ev::timer &w, int revents);
-  ev::timer update_background_ev;
 #endif
 
   void x_cb (XEvent &xev);
@@ -1389,6 +1294,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   void process_osc_seq ();
   void process_color_seq (int report, int color, const char *str, char resp);
   void process_xterm_seq (int op, char *str, char resp);
+  unsigned int map_rgb24_color (unsigned int r, unsigned int g, unsigned int b, unsigned int a);
   int privcases (int mode, unsigned long bit);
   void process_terminal_mode (int mode, int priv, unsigned int nargs, const int *arg);
   void process_sgr_mode (unsigned int nargs, const int *arg);
@@ -1563,7 +1469,11 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   int bind_action (const char *str, const char *arg);
   const char *x_resource (const char *name);
   void extract_resources ();
-  void enumerate_keysym_resources (void (*cb)(rxvt_term *, const char *, const char *));
+  void enumerate_resources (void (*cb)(rxvt_term *, const char *, const char *), const char *name_p = 0, const char *class_p = 0);
+  void enumerate_keysym_resources (void (*cb)(rxvt_term *, const char *, const char *))
+  {
+    enumerate_resources (cb, "keysym", "Keysym");
+  }
   void extract_keysym_resources ();
 };
 

@@ -376,7 +376,7 @@ namespace ev {
 
   struct default_loop : loop_ref
   {
-    default_loop (unsigned int flags = AUTO) throw (bad_loop)
+    default_loop (unsigned int flags = AUTO) // throw (bad_loop)
 #if EV_MULTIPLICITY
     : loop_ref (ev_default_loop (flags))
 #endif
